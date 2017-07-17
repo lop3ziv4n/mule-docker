@@ -1,0 +1,45 @@
+# To run, call:
+#   $ docker-compose up
+
+version: '2'
+
+networks:
+  &network interoperability-net:
+    driver: bridge
+
+services:
+  activemq:
+    container_name: activemq
+    build: ./activemq
+    environment:
+      - ACTIVEMQ_VERSION=5.13.3
+    image: app/activemq
+    networks:
+      - *network
+    ports:
+      - "8161:8161"
+      - "61616:61616"
+    volumes:
+      - /usr/local/app-docker/logs/interoperability:/opt/activemq/data
+
+  mule:
+    container_name: mule
+    depends_on:
+      - activemq
+    build: ./mule
+    environment:
+      - MULE_VERSION=3.4.0
+    image: app/mule
+    networks:
+      - *network
+    ports:
+      - "63080:63080"
+      - "63081:63081"
+      - "63082:63082"
+    links:
+      - activemq:activemq
+    volumes:
+      - /usr/local/app-docker/interoperability/apps:/opt/mule/apps
+      - /usr/local/app-docker/logs/interoperability:/opt/mule/logs
+      - /usr/local/app-docker/interoperability/conf:/opt/mule/conf
+      - /usr/local/app-docker/interoperability/lib:/opt/mule/lib/user
